@@ -48,10 +48,11 @@
 
   .widget {
     background: var(--card); border: 1px solid var(--border); border-left: 3px solid var(--muted);
-    border-radius: 10px; padding: 10px 12px; display: flex; gap: 10px;
+    border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px;
   }
   .widget.up { border-left-color: var(--up); }
   .widget.down { border-left-color: var(--down); }
+  .wtop { display: flex; gap: 10px; }
 
   .wleft { flex: 1; min-width: 0; }
   .wl-head { display: flex; justify-content: space-between; align-items: baseline; }
@@ -62,7 +63,7 @@
   .price { font-size: 25px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 1px 0; }
   .line { font-size: 11px; color: var(--muted); padding: 1px 0; }
   .line .num { color: var(--text); font-variant-numeric: tabular-nums; }
-  .updated { font-size: 9px; color: var(--muted); margin-top: 5px; }
+  .updated { font-size: 9px; color: var(--muted); text-align: right; padding-top: 5px; border-top: 1px solid var(--border); }
   .up-t { color: var(--up); } .down-t { color: var(--down); } .neutral-t { color: var(--neutral); }
 
   /* ინვესთმენტი — მარჯვენა ბლოკი */
@@ -290,6 +291,7 @@ function widgetHTML(sym) {
   const qtyV = pf.qty ? fmtInput(pf.qty) : "";
   const invV = pf.invested ? fmtInput(pf.invested) : "";
   return '<div class="widget" id="w-' + sym + '">' +
+    '<div class="wtop">' +
     '<div class="wleft">' +
       '<div class="wl-head"><div><span class="sym">' + sym + '</span><span class="name">' + name + '</span></div>' +
       '<span class="del" onclick="removeSymbol(\'' + sym + '\')">✕</span></div>' +
@@ -304,8 +306,9 @@ function widgetHTML(sym) {
       '<div class="pf-lbl" style="margin-top:2px">ღირებულება</div>' +
       '<div class="pf-val" id="pfval-' + sym + '">—</div>' +
       '<div class="pf-diff" id="pfdiff-' + sym + '"></div>' +
-      '<div class="updated" id="upd-' + sym + '"></div>' +
     '</div>' +
+    '</div>' +
+    '<div class="updated" id="upd-' + sym + '"></div>' +
   '</div>';
 }
 function renderWidgets() {
