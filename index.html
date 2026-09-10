@@ -16,7 +16,7 @@
     background: var(--bg); color: var(--text);
     font-family: "SF Mono", "JetBrains Mono", "Consolas", monospace;
     padding: 8px; display: flex; flex-direction: column; gap: 8px;
-    max-width: 440px; margin: 0 auto;
+    max-width: 520px; margin: 0 auto;
   }
   .searchwrap { position: relative; }
   .searchbar { display: flex; gap: 6px; }
@@ -54,16 +54,16 @@
   .widget.down { border-left-color: var(--down); }
   .wtop { display: flex; gap: 10px; }
 
-  .wleft { flex: 1; min-width: 0; }
+  .wleft { flex: 1; min-width: 0; display: flex; flex-direction: column; }
   .wl-head { display: flex; justify-content: space-between; align-items: baseline; }
   .sym { font-size: 14px; font-weight: 700; letter-spacing: 1px; }
   .name { font-size: 10px; color: var(--muted); margin-left: 5px; }
   .del { color: var(--muted); font-size: 13px; cursor: pointer; line-height: 1; }
   .del:hover { color: var(--down); }
   .price { font-size: 25px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 1px 0; }
-  .line { font-size: 11px; color: var(--muted); padding: 1px 0; }
+  .line { font-size: 11px; color: var(--muted); padding: 1px 0; white-space: nowrap; }
   .line .num { color: var(--text); font-variant-numeric: tabular-nums; }
-  .updated { font-size: 9px; color: var(--muted); text-align: right; padding-top: 5px; border-top: 1px solid var(--border); }
+  .updated { font-size: 9px; color: var(--muted); text-align: left; margin-top: auto; padding-top: 4px; }
   .up-t { color: var(--up); } .down-t { color: var(--down); } .neutral-t { color: var(--neutral); }
 
   /* ინვესთმენტი — მარჯვენა ბლოკი */
@@ -298,6 +298,7 @@ function widgetHTML(sym) {
       '<div class="price skeleton" id="price-' + sym + '">—</div>' +
       '<div class="line">დღეს გახსნა <span class="num" id="open-' + sym + '">—</span> <span id="cmp-open-' + sym + '"></span></div>' +
       '<div class="line">გუშინ დახურვა <span class="num" id="pc-' + sym + '">—</span> <span id="cmp-pc-' + sym + '"></span></div>' +
+      '<div class="updated" id="upd-' + sym + '"></div>' +
     '</div>' +
     '<div class="wright">' +
       '<div class="pf-lbl">ინვესთმენტი</div>' +
@@ -308,7 +309,6 @@ function widgetHTML(sym) {
       '<div class="pf-diff" id="pfdiff-' + sym + '"></div>' +
     '</div>' +
     '</div>' +
-    '<div class="updated" id="upd-' + sym + '"></div>' +
   '</div>';
 }
 function renderWidgets() {
