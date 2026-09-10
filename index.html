@@ -11,80 +11,79 @@
     --muted: #8b949e; --up: #3fb950; --down: #f85149; --neutral: #d29922; --accent: #58a6ff;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; }
   body {
     background: var(--bg); color: var(--text);
     font-family: "SF Mono", "JetBrains Mono", "Consolas", monospace;
-    padding: 10px; display: flex; flex-direction: column; gap: 10px;
+    padding: 8px; display: flex; flex-direction: column; gap: 8px;
   }
   .searchwrap { position: relative; }
   .searchbar { display: flex; gap: 6px; }
   .searchbar input {
-    flex: 1; padding: 9px 11px; background: var(--card); border: 1px solid var(--border);
+    flex: 1; padding: 8px 10px; background: var(--card); border: 1px solid var(--border);
     color: var(--text); font-family: inherit; font-size: 13px; border-radius: 8px;
   }
   .searchbar input::placeholder { color: var(--muted); }
   .searchbar button {
-    padding: 9px 14px; background: var(--accent); color: #0d1117; border: none; border-radius: 8px;
+    padding: 8px 13px; background: var(--accent); color: #0d1117; border: none; border-radius: 8px;
     font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
   }
-  .searchbar button:hover { opacity: .9; }
-  .searcherr { color: var(--down); font-size: 11px; min-height: 13px; padding-left: 2px; }
+  .searcherr { color: var(--down); font-size: 11px; min-height: 12px; padding-left: 2px; }
   .dropdown {
-    position: absolute; top: 44px; left: 0; right: 0; z-index: 20;
+    position: absolute; top: 42px; left: 0; right: 0; z-index: 20;
     background: var(--card); border: 1px solid var(--border); border-radius: 8px;
-    max-height: 260px; overflow-y: auto; display: none;
+    max-height: 240px; overflow-y: auto; display: none;
   }
   .dropdown.show { display: block; }
-  .opt { padding: 9px 11px; cursor: pointer; border-bottom: 1px solid var(--border); }
+  .opt { padding: 8px 10px; cursor: pointer; border-bottom: 1px solid var(--border); }
   .opt:last-child { border-bottom: none; }
   .opt:hover { background: var(--bg); }
   .opt .t { font-size: 13px; font-weight: 700; }
   .opt .d { font-size: 11px; color: var(--muted); margin-top: 1px; }
   .opt .loading, .opt .empty { color: var(--muted); font-size: 12px; }
+
+  /* გრიდი — ავტომატური მორგება */
+  #widgets { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 8px; }
+
   .widget {
-    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-    padding: 14px 16px; position: relative; overflow: hidden;
+    background: var(--card); border: 1px solid var(--border); border-left: 3px solid var(--muted);
+    border-radius: 10px; padding: 10px 12px; display: flex; gap: 10px;
   }
-  .widget::before {
-    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-    background: var(--muted); transition: background .3s;
-  }
-  .widget.up::before { background: var(--up); }
-  .widget.down::before { background: var(--down); }
-  .row1 { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
-  .sym { font-size: 15px; font-weight: 700; letter-spacing: 1px; }
-  .name { font-size: 10px; color: var(--muted); font-weight: 400; margin-left: 6px; }
-  .del { color: var(--muted); font-size: 14px; cursor: pointer; padding: 0 4px; line-height: 1; }
+  .widget.up { border-left-color: var(--up); }
+  .widget.down { border-left-color: var(--down); }
+
+  .wleft { flex: 1; min-width: 0; }
+  .wl-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .sym { font-size: 14px; font-weight: 700; letter-spacing: 1px; }
+  .name { font-size: 10px; color: var(--muted); margin-left: 5px; }
+  .del { color: var(--muted); font-size: 13px; cursor: pointer; line-height: 1; }
   .del:hover { color: var(--down); }
-  .price { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.05; }
-  .lines { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
-  .line { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; padding: 3px 0; }
-  .line .left { color: var(--muted); }
-  .line .left .num { color: var(--text); font-variant-numeric: tabular-nums; margin-left: 4px; }
-  .line .cmp { font-size: 11px; font-variant-numeric: tabular-nums; }
+  .price { font-size: 25px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 1px 0; }
+  .line { font-size: 11px; color: var(--muted); padding: 1px 0; }
+  .line .num { color: var(--text); font-variant-numeric: tabular-nums; }
+  .updated { font-size: 9px; color: var(--muted); margin-top: 5px; }
   .up-t { color: var(--up); } .down-t { color: var(--down); } .neutral-t { color: var(--neutral); }
 
-  /* პორტფელი */
-  .pf { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
-  .pf-inputs { display: flex; gap: 6px; margin-bottom: 8px; }
-  .pf-inputs input {
-    flex: 1; width: 50%; padding: 6px 8px; background: var(--bg); border: 1px solid var(--border);
-    color: var(--text); font-family: inherit; font-size: 11px; border-radius: 6px;
+  /* ინვესთმენტი — მარჯვენა ბლოკი */
+  .wright {
+    width: 120px; border-left: 1px solid var(--border); padding-left: 10px;
+    display: flex; flex-direction: column; gap: 5px;
   }
-  .pf-inputs input::placeholder { color: var(--muted); font-size: 10px; }
-  .pf-row { display: flex; justify-content: space-between; font-size: 12px; padding: 2px 0; }
-  .pf-row .k { color: var(--muted); }
-  .pf-row .v { font-variant-numeric: tabular-nums; }
-  .pf-row.big .v { font-size: 13px; font-weight: 700; }
+  .pf-lbl { font-size: 10px; color: var(--muted); }
+  .wright input {
+    width: 100%; padding: 5px 7px; background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); font-family: inherit; font-size: 11px; border-radius: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .wright input::placeholder { color: var(--muted); font-size: 10px; }
+  .pf-val { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .pf-diff { font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
 
-  .updated { font-size: 9px; color: var(--muted); margin-top: 8px; text-align: right; }
   .foot { text-align: center; font-size: 10px; color: var(--muted); }
   .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); margin-right: 4px; vertical-align: middle; }
   .dot.live { background: var(--up); animation: pulse 2s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
   .skeleton { color: var(--muted); }
-  .keybox { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 16px; }
+  .keybox { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 16px; max-width: 420px; margin: 0 auto; }
   .keybox h2 { font-size: 14px; margin-bottom: 6px; }
   .keybox p { font-size: 11px; color: var(--muted); line-height: 1.5; margin-bottom: 12px; }
   .keybox p a { color: var(--accent); }
@@ -96,7 +95,6 @@
     width: 100%; padding: 9px; background: var(--accent); color: #0d1117; border: none; border-radius: 6px;
     font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
   }
-  .keybox button:hover { opacity: .9; }
   .keyerr { color: var(--down); font-size: 11px; margin-top: 8px; min-height: 14px; }
   .reset { text-align: center; margin-top: 2px; }
   .reset a { color: var(--muted); font-size: 10px; cursor: pointer; text-decoration: underline; }
@@ -137,8 +135,8 @@ const NAMES = { ORCL: "Oracle", FLUT: "Flutter Ent." };
 
 let API_KEY = "";
 let symbols = [];
-let portfolio = {};   // sym -> { qty, invested }
-let lastPrice = {};   // sym -> მიმდინარე ფასი
+let portfolio = {};
+let lastPrice = {};
 let timer = null;
 let searchTimer = null;
 
@@ -146,6 +144,17 @@ function fmt(n, d = 2) {
   if (n === null || n === undefined || isNaN(n)) return "—";
   return Number(n).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
 }
+// ველის ფორმატირება 1000-ეულებით (ჩვენებისთვის)
+function fmtInput(raw) {
+  if (raw === "" || raw === null || raw === undefined) return "";
+  const clean = String(raw).replace(/,/g, "");
+  const parts = clean.split(".");
+  const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return parts.length > 1 ? intPart + "." + parts[1] : intPart;
+}
+// მძიმეების მოშორება — გამოთვლისთვის
+function parseNum(raw) { return parseFloat(String(raw).replace(/,/g, "")) || 0; }
+
 function comparison(price, base) {
   const dev = price - base;
   const pct = base ? (dev / base) * 100 : 0;
@@ -243,10 +252,14 @@ function removeSymbol(sym) {
   refresh();
 }
 
-// --- პორტფელი ---
 function onPfChange(sym) {
-  const qty = parseFloat(document.getElementById("qty-" + sym).value) || 0;
-  const inv = parseFloat(document.getElementById("inv-" + sym).value) || 0;
+  const qtyEl = document.getElementById("qty-" + sym);
+  const invEl = document.getElementById("inv-" + sym);
+  const qty = parseNum(qtyEl.value);
+  const inv = parseNum(invEl.value);
+  // ვიზუალური ფორმატირება — კურსორის ბოლოში
+  qtyEl.value = fmtInput(qtyEl.value);
+  invEl.value = fmtInput(invEl.value);
   portfolio[sym] = { qty, invested: inv };
   storePortfolio();
   updatePortfolio(sym);
@@ -257,7 +270,7 @@ function updatePortfolio(sym) {
   const valEl = document.getElementById("pfval-" + sym);
   const diffEl = document.getElementById("pfdiff-" + sym);
   if (!valEl || !diffEl) return;
-  if (!pf.qty || price === undefined) { valEl.textContent = "—"; diffEl.textContent = "—"; diffEl.className = "v"; return; }
+  if (!pf.qty || price === undefined) { valEl.textContent = "—"; diffEl.textContent = ""; diffEl.className = "pf-diff"; return; }
   const value = pf.qty * price;
   valEl.textContent = "$" + fmt(value);
   if (pf.invested > 0) {
@@ -265,32 +278,33 @@ function updatePortfolio(sym) {
     const pct = (diff / pf.invested) * 100;
     const sign = diff >= 0 ? "+" : "-";
     diffEl.textContent = sign + "$" + fmt(Math.abs(diff)) + " (" + sign + fmt(Math.abs(pct)) + "%)";
-    diffEl.className = "v " + (diff > 0 ? "up-t" : diff < 0 ? "down-t" : "neutral-t");
-  } else { diffEl.textContent = "—"; diffEl.className = "v"; }
+    diffEl.className = "pf-diff " + (diff > 0 ? "up-t" : diff < 0 ? "down-t" : "neutral-t");
+  } else { diffEl.textContent = ""; diffEl.className = "pf-diff"; }
 }
 
 function widgetHTML(sym) {
   const name = NAMES[sym] || "";
   const pf = portfolio[sym] || { qty: "", invested: "" };
-  const qtyV = pf.qty ? pf.qty : "";
-  const invV = pf.invested ? pf.invested : "";
+  const qtyV = pf.qty ? fmtInput(pf.qty) : "";
+  const invV = pf.invested ? fmtInput(pf.invested) : "";
   return '<div class="widget" id="w-' + sym + '">' +
-    '<div class="row1"><div><span class="sym">' + sym + '</span><span class="name">' + name + '</span></div>' +
-    '<span class="del" onclick="removeSymbol(\'' + sym + '\')">✕</span></div>' +
-    '<div class="price skeleton" id="price-' + sym + '">—</div>' +
-    '<div class="lines">' +
-    '<div class="line"><span class="left">დღეს გახსნა<span class="num" id="open-' + sym + '">—</span></span><span class="cmp" id="cmp-open-' + sym + '">—</span></div>' +
-    '<div class="line"><span class="left">გუშინ დახურვა<span class="num" id="pc-' + sym + '">—</span></span><span class="cmp" id="cmp-pc-' + sym + '">—</span></div>' +
+    '<div class="wleft">' +
+      '<div class="wl-head"><div><span class="sym">' + sym + '</span><span class="name">' + name + '</span></div>' +
+      '<span class="del" onclick="removeSymbol(\'' + sym + '\')">✕</span></div>' +
+      '<div class="price skeleton" id="price-' + sym + '">—</div>' +
+      '<div class="line">დღეს გახსნა <span class="num" id="open-' + sym + '">—</span> <span id="cmp-open-' + sym + '"></span></div>' +
+      '<div class="line">გუშინ დახურვა <span class="num" id="pc-' + sym + '">—</span> <span id="cmp-pc-' + sym + '"></span></div>' +
+      '<div class="updated" id="upd-' + sym + '"></div>' +
     '</div>' +
-    '<div class="pf">' +
-      '<div class="pf-inputs">' +
-        '<input type="number" id="qty-' + sym + '" placeholder="ცალი" value="' + qtyV + '" oninput="onPfChange(\'' + sym + '\')">' +
-        '<input type="number" id="inv-' + sym + '" placeholder="ჩადებული $" value="' + invV + '" oninput="onPfChange(\'' + sym + '\')">' +
-      '</div>' +
-      '<div class="pf-row big"><span class="k">მიმდინარე ღირებულება</span><span class="v" id="pfval-' + sym + '">—</span></div>' +
-      '<div class="pf-row"><span class="k">მოგება / ზარალი</span><span class="v" id="pfdiff-' + sym + '">—</span></div>' +
+    '<div class="wright">' +
+      '<div class="pf-lbl">ინვესთმენტი</div>' +
+      '<input type="text" inputmode="decimal" id="qty-' + sym + '" placeholder="ცალი" value="' + qtyV + '" oninput="onPfChange(\'' + sym + '\')">' +
+      '<input type="text" inputmode="decimal" id="inv-' + sym + '" placeholder="ჩადებული $" value="' + invV + '" oninput="onPfChange(\'' + sym + '\')">' +
+      '<div class="pf-lbl" style="margin-top:2px">ღირებულება</div>' +
+      '<div class="pf-val" id="pfval-' + sym + '">—</div>' +
+      '<div class="pf-diff" id="pfdiff-' + sym + '"></div>' +
     '</div>' +
-    '<div class="updated" id="upd-' + sym + '"></div></div>';
+  '</div>';
 }
 function renderWidgets() {
   document.getElementById("widgets").innerHTML = symbols.map(widgetHTML).join("");
@@ -306,12 +320,12 @@ function fillQuote(sym, q) {
   wEl.className = "widget " + (up ? "up" : down ? "down" : "");
   const priceEl = document.getElementById("price-" + sym);
   priceEl.textContent = "$" + fmt(price); priceEl.classList.remove("skeleton");
-  document.getElementById("open-" + sym).textContent = " $" + fmt(q.o);
+  document.getElementById("open-" + sym).textContent = "$" + fmt(q.o);
   const co = comparison(price, q.o);
-  const coEl = document.getElementById("cmp-open-" + sym); coEl.className = "cmp " + co.cls; coEl.textContent = co.html;
-  document.getElementById("pc-" + sym).textContent = " $" + fmt(q.pc);
+  const coEl = document.getElementById("cmp-open-" + sym); coEl.className = co.cls; coEl.textContent = co.html;
+  document.getElementById("pc-" + sym).textContent = "$" + fmt(q.pc);
   const cp = comparison(price, q.pc);
-  const cpEl = document.getElementById("cmp-pc-" + sym); cpEl.className = "cmp " + cp.cls; cpEl.textContent = cp.html;
+  const cpEl = document.getElementById("cmp-pc-" + sym); cpEl.className = cp.cls; cpEl.textContent = cp.html;
   updatePortfolio(sym);
   const updEl = document.getElementById("upd-" + sym);
   if (updEl) updEl.textContent = "განახლდა " + new Date().toLocaleTimeString("ka-GE");
