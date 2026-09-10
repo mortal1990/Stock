@@ -48,7 +48,7 @@
 
   .summary {
     background: var(--card); border: 1px solid var(--border); border-left: 3px solid var(--accent);
-    border-radius: 10px; padding: 12px 14px;
+    border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
   }
   .sum-title { font-size: 12px; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 10px; }
   .sum-cols { display: flex; justify-content: space-between; gap: 10px; }
@@ -146,13 +146,16 @@
     <div class="sum-title">პორტფელის შეჯამება</div>
     <div class="sum-cols">
       <div class="sum-cell">
-        <div class="sum-lbl">ინვესტიცია</div>
+        <div class="sum-lbl">მიმდ. ინვესტიცია</div>
         <div class="sum-val" id="sum-invested">—</div>
+        <div class="sum-lbl" style="margin-top:6px">თავდ. ინვესტიცია</div>
+        <div class="sum-val" id="sum-initial">—</div>
       </div>
       <div class="sum-cell brd">
         <div class="sum-lbl">მიმდ. ღირებულება</div>
         <div class="sum-val" id="sum-value">—</div>
         <div class="sum-diff" id="sum-diff"></div>
+        <div class="sum-diff" id="sum-diff-initial"></div>
       </div>
       <div class="sum-cell brd">
         <div class="sum-lbl">Δ დღეს</div>
@@ -298,12 +301,15 @@ function removeSymbol(sym) {
 function onPfChange(sym) {
   const qtyEl = document.getElementById("qty-" + sym);
   const invEl = document.getElementById("inv-" + sym);
+  const initEl = document.getElementById("init-" + sym);
   const qty = parseNum(qtyEl.value);
   const inv = parseNum(invEl.value);
-  // ვიზუალური ფორმატირება — კურსორის ბოლოში
+  const init = parseNum(initEl.value);
+  // ვიზუალური ფორმატირება
   qtyEl.value = fmtInput(qtyEl.value);
   invEl.value = fmtInput(invEl.value);
-  portfolio[sym] = { qty, invested: inv };
+  initEl.value = fmtInput(initEl.value);
+  portfolio[sym] = { qty, invested: inv, initial: init };
   storePortfolio();
   updatePortfolio(sym);
   updateSummary();
@@ -313,24 +319,33 @@ function updatePortfolio(sym) {
   const price = lastPrice[sym];
   const valEl = document.getElementById("pfval-" + sym);
   const diffEl = document.getElementById("pfdiff-" + sym);
+  const diffInitEl = document.getElementById("pfdiff-init-" + sym);
   const todayEl = document.getElementById("today-" + sym);
   const todayPctEl = document.getElementById("today-pct-" + sym);
   if (!valEl || !diffEl) return;
   if (!pf.qty || price === undefined) {
-    valEl.textContent = "—"; diffEl.textContent = ""; diffEl.className = "pf-diff";
+    valEl.textContent = "—";
+    diffEl.textContent = ""; diffEl.className = "pf-diff";
+    if (diffInitEl) { diffInitEl.textContent = ""; diffInitEl.className = "pf-diff"; }
     if (todayEl) { todayEl.textContent = "—"; todayEl.className = "pf-val"; }
     if (todayPctEl) { todayPctEl.textContent = ""; todayPctEl.className = "pf-diff"; }
     return;
   }
   const value = pf.qty * price;
   valEl.textContent = "$" + fmt(value);
-  if (pf.invested > 0) {
-    const diff = value - pf.invested;
-    const pct = (diff / pf.invested) * 100;
-    const sign = diff >= 0 ? "+" : "-";
-    diffEl.textContent = sign + "$" + fmt(Math.abs(diff)) + " (" + sign + fmt(Math.abs(pct)) + "%)";
-    diffEl.className = "pf-diff " + (diff > 0 ? "up-t" : diff < 0 ? "down-t" : "neutral-t");
-  } else { diffEl.textContent = ""; diffEl.className = "pf-diff"; }
+  // შედარება: მიმდ. და თავდ. ინვესტიციასთან
+  function setDiff(el, base, prefix) {
+    if (!el) return;
+    if (base > 0) {
+      const diff = value - base;
+      const pct = (diff / base) * 100;
+      const sign = diff >= 0 ? "+" : "-";
+      el.textContent = prefix + sign + "$" + fmt(Math.abs(diff)) + " (" + sign + fmt(Math.abs(pct)) + "%)";
+      el.className = "pf-diff " + (diff > 0 ? "up-t" : diff < 0 ? "down-t" : "neutral-t");
+    } else { el.textContent = ""; el.className = "pf-diff"; }
+  }
+  setDiff(diffEl, pf.invested, "მიმდ: ");
+  setDiff(diffInitEl, pf.initial, "თავდ: ");
   // Δ დღეს — გახსნიდან
   const op = openPrice[sym];
   if (todayEl && op !== undefined) {
@@ -347,9 +362,10 @@ function updatePortfolio(sym) {
 
 function widgetHTML(sym) {
   const name = NAMES[sym] || "";
-  const pf = portfolio[sym] || { qty: "", invested: "" };
+  const pf = portfolio[sym] || { qty: "", invested: "", initial: "" };
   const qtyV = pf.qty ? fmtInput(pf.qty) : "";
   const invV = pf.invested ? fmtInput(pf.invested) : "";
+  const initV = pf.initial ? fmtInput(pf.initial) : "";
   return '<div class="widget" id="w-' + sym + '">' +
     '<div class="wtop">' +
     '<div class="wleft">' +
@@ -363,6 +379,7 @@ function widgetHTML(sym) {
           '<div class="pf-lbl">ღირებულება</div>' +
           '<div class="pf-val" id="pfval-' + sym + '">—</div>' +
           '<div class="pf-diff" id="pfdiff-' + sym + '"></div>' +
+          '<div class="pf-diff" id="pfdiff-init-' + sym + '"></div>' +
         '</div>' +
         '<div class="wb-sep"></div>' +
         '<div class="wb-cell">' +
@@ -375,7 +392,8 @@ function widgetHTML(sym) {
     '<div class="wright">' +
       '<div class="pf-lbl">ინვესთმენტი</div>' +
       '<input type="text" inputmode="decimal" id="qty-' + sym + '" placeholder="ცალი" value="' + qtyV + '" oninput="onPfChange(\'' + sym + '\')">' +
-      '<input type="text" inputmode="decimal" id="inv-' + sym + '" placeholder="ჩადებული $" value="' + invV + '" oninput="onPfChange(\'' + sym + '\')">' +
+      '<input type="text" inputmode="decimal" id="inv-' + sym + '" placeholder="მიმდ. ინვესტ. $" value="' + invV + '" oninput="onPfChange(\'' + sym + '\')">' +
+      '<input type="text" inputmode="decimal" id="init-' + sym + '" placeholder="თავდ. ინვესტ. $" value="' + initV + '" oninput="onPfChange(\'' + sym + '\')">' +
       '<div class="updated" id="upd-' + sym + '"></div>' +
     '</div>' +
     '</div>' +
@@ -410,12 +428,13 @@ function fillQuote(sym, q) {
 
 // პორტფელის საერთო შეჯამება
 function updateSummary() {
-  let totalInvested = 0, totalValue = 0, totalToday = 0;
+  let totalInvested = 0, totalInitial = 0, totalValue = 0, totalToday = 0;
   let hasValue = false, hasToday = false;
   for (const s of symbols) {
-    const pf = portfolio[s] || { qty: 0, invested: 0 };
+    const pf = portfolio[s] || { qty: 0, invested: 0, initial: 0 };
     const price = lastPrice[s];
     if (pf.invested > 0) totalInvested += pf.invested;
+    if (pf.initial > 0) totalInitial += pf.initial;
     if (pf.qty && price !== undefined) {
       totalValue += pf.qty * price;
       hasValue = true;
@@ -423,21 +442,31 @@ function updateSummary() {
       if (op !== undefined) { totalToday += (price - op) * pf.qty; hasToday = true; }
     }
   }
-  // ინვესტიცია
+  // მიმდ. და თავდ. ინვესტიცია
   document.getElementById("sum-invested").textContent = totalInvested > 0 ? "$" + fmt(totalInvested) : "—";
-  // მიმდ. ღირებულება + საერთო მოგება/ზარალი
+  document.getElementById("sum-initial").textContent = totalInitial > 0 ? "$" + fmt(totalInitial) : "—";
+  // მიმდ. ღირებულება + შედარება ორივესთან
   const valEl = document.getElementById("sum-value");
   const diffEl = document.getElementById("sum-diff");
+  const diffInitEl = document.getElementById("sum-diff-initial");
+  function diffLine(el, base, prefix) {
+    if (base > 0 && hasValue) {
+      const diff = totalValue - base;
+      const pct = (diff / base) * 100;
+      const sign = diff >= 0 ? "+" : "-";
+      el.textContent = prefix + sign + "$" + fmt(Math.abs(diff)) + " (" + sign + fmt(Math.abs(pct)) + "%)";
+      el.className = "sum-diff " + (diff > 0 ? "up-t" : diff < 0 ? "down-t" : "neutral-t");
+    } else { el.textContent = ""; el.className = "sum-diff"; }
+  }
   if (hasValue) {
     valEl.textContent = "$" + fmt(totalValue);
-    if (totalInvested > 0) {
-      const diff = totalValue - totalInvested;
-      const pct = (diff / totalInvested) * 100;
-      const sign = diff >= 0 ? "+" : "-";
-      diffEl.textContent = sign + "$" + fmt(Math.abs(diff)) + " (" + sign + fmt(Math.abs(pct)) + "%)";
-      diffEl.className = "sum-diff " + (diff > 0 ? "up-t" : diff < 0 ? "down-t" : "neutral-t");
-    } else { diffEl.textContent = ""; diffEl.className = "sum-diff"; }
-  } else { valEl.textContent = "—"; diffEl.textContent = ""; diffEl.className = "sum-diff"; }
+    diffLine(diffEl, totalInvested, "მიმდ: ");
+    diffLine(diffInitEl, totalInitial, "თავდ: ");
+  } else {
+    valEl.textContent = "—";
+    diffEl.textContent = ""; diffEl.className = "sum-diff";
+    diffInitEl.textContent = ""; diffInitEl.className = "sum-diff";
+  }
   // Δ დღეს (გახსნიდან)
   const todayEl = document.getElementById("sum-today");
   const todayPctEl = document.getElementById("sum-today-pct");
@@ -446,7 +475,6 @@ function updateSummary() {
     const cls = totalToday > 0 ? "up-t" : totalToday < 0 ? "down-t" : "neutral-t";
     todayEl.textContent = sign + "$" + fmt(Math.abs(totalToday));
     todayEl.className = "sum-val " + cls;
-    // პროცენტი: დღევანდელი ცვლილება გახსნის ჯამურ ღირებულებასთან
     let openValue = 0;
     for (const s of symbols) {
       const pf = portfolio[s] || { qty: 0 };
