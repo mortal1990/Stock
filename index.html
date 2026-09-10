@@ -16,7 +16,7 @@
     background: var(--bg); color: var(--text);
     font-family: "SF Mono", "JetBrains Mono", "Consolas", monospace;
     padding: 8px; display: flex; flex-direction: column; gap: 8px;
-    max-width: 440px; margin: 0 auto;
+    max-width: 380px; margin: 0 auto;
   }
   .searchwrap { position: relative; }
   .searchbar { display: flex; gap: 6px; }
@@ -296,7 +296,6 @@ function widgetHTML(sym) {
       '<div class="price skeleton" id="price-' + sym + '">—</div>' +
       '<div class="line">დღეს გახსნა <span class="num" id="open-' + sym + '">—</span> <span id="cmp-open-' + sym + '"></span></div>' +
       '<div class="line">გუშინ დახურვა <span class="num" id="pc-' + sym + '">—</span> <span id="cmp-pc-' + sym + '"></span></div>' +
-      '<div class="updated" id="upd-' + sym + '"></div>' +
     '</div>' +
     '<div class="wright">' +
       '<div class="pf-lbl">ინვესთმენტი</div>' +
@@ -305,6 +304,7 @@ function widgetHTML(sym) {
       '<div class="pf-lbl" style="margin-top:2px">ღირებულება</div>' +
       '<div class="pf-val" id="pfval-' + sym + '">—</div>' +
       '<div class="pf-diff" id="pfdiff-' + sym + '"></div>' +
+      '<div class="updated" id="upd-' + sym + '"></div>' +
     '</div>' +
   '</div>';
 }
