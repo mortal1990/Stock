@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stocks</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #2d333b;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --up: #3fb950;
+    --down: #f85149;
+    --neutral: #d29922;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "SF Mono", "JetBrains Mono", "Consolas", monospace;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .widget {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .widget::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--muted); transition: background .3s;
+  }
+  .widget.up::before { background: var(--up); }
+  .widget.down::before { background: var(--down); }
+
+  /* სათაური */
+  .row1 { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
+  .sym { font-size: 15px; font-weight: 700; letter-spacing: 1px; }
+  .name { font-size: 10px; color: var(--muted); font-weight: 400; margin-left: 6px; letter-spacing: 0; }
+
+  /* მიმდინარე ფასი */
+  .price { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.05; }
+
+  /* გახსნა / დახურვა — ვერტიკალურად ჩამწკრივებული */
+  .lines { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .line {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 12px; padding: 3px 0;
+  }
+  .line .left { color: var(--muted); }
+  .line .left .num { color: var(--text); font-variant-numeric: tabular-nums; margin-left: 4px; }
+  .line .cmp { font-size: 11px; font-variant-numeric: tabular-nums; }
+
+  .up-t { color: var(--up); }
+  .down-t { color: var(--down); }
+  .neutral-t { color: var(--neutral); }
+
+  .foot { text-align: center; font-size: 10px; color: var(--muted); }
+  .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); margin-right: 4px; vertical-align: middle; }
+  .dot.live { background: var(--up); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+
+  .skeleton { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="widget" id="w-ORCL">
+  <div class="row1">
+    <div><span class="sym">ORCL</span><span class="name">Oracle</span></div>
+  </div>
+  <div class="price skeleton" id="price-ORCL">—</div>
+  <div class="lines">
+    <div class="line">
+      <span class="left">დღეს გახსნა<span class="num" id="open-ORCL">—</span></span>
+      <span class="cmp" id="cmp-open-ORCL">—</span>
+    </div>
+    <div class="line">
+      <span class="left">გუშინ დახურვა<span class="num" id="pc-ORCL">—</span></span>
+      <span class="cmp" id="cmp-pc-ORCL">—</span>
+    </div>
+  </div>
+</div>
+
+<div class="widget" id="w-FLUT">
+  <div class="row1">
+    <div><span class="sym">FLUT</span><span class="name">Flutter Ent.</span></div>
+  </div>
+  <div class="price skeleton" id="price-FLUT">—</div>
+  <div class="lines">
+    <div class="line">
+      <span class="left">დღეს გახსნა<span class="num" id="open-FLUT">—</span></span>
+      <span class="cmp" id="cmp-open-FLUT">—</span>
+    </div>
+    <div class="line">
+      <span class="left">გუშინ დახურვა<span class="num" id="pc-FLUT">—</span></span>
+      <span class="cmp" id="cmp-pc-FLUT">—</span>
+    </div>
+  </div>
+</div>
+
+<div class="foot"><span class="dot" id="statusDot"></span><span id="statusText">უკავშირდება...</span></div>
+
+<script>
+const API_KEY = "dagkjp9r01quf8mumqg0dagkjp9r01quf8mumqgg";
+const SYMBOLS = ["ORCL", "FLUT"];
+
+function fmt(n, d = 2) {
+  if (n === null || n === undefined || isNaN(n)) return "—";
+  return Number(n).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+
+// შედარების ხაზი: მიმდინარე ფასი vs საბაზისო ფასი (გახსნა ან დახურვა)
+function comparison(price, base) {
+  const dev = price - base;
+  const pct = base ? (dev / base) * 100 : 0;
+  const cls = dev > 0 ? "up-t" : dev < 0 ? "down-t" : "neutral-t";
+  const sign = dev >= 0 ? "+" : "-";
+  return { html: `${sign}$${fmt(Math.abs(dev))} (${sign}${fmt(Math.abs(pct))}%)`, cls };
+}
+
+async function loadQuote(sym) {
+  const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${API_KEY}`);
+  const q = await r.json();
+  if (q.c === undefined || q.c === 0) throw new Error("no data");
+
+  const price = q.c, chg = q.d;
+  const up = chg > 0, down = chg < 0;
+
+  // ჩარჩო + მიმართულების ფერი (მარცხენა ზოლი)
+  document.getElementById("w-" + sym).className = "widget " + (up ? "up" : down ? "down" : "");
+
+  const priceEl = document.getElementById("price-" + sym);
+  priceEl.textContent = "$" + fmt(price);
+  priceEl.classList.remove("skeleton");
+
+  // გახსნა + შედარება
+  document.getElementById("open-" + sym).textContent = " $" + fmt(q.o);
+  const co = comparison(price, q.o);
+  const coEl = document.getElementById("cmp-open-" + sym);
+  coEl.className = "cmp " + co.cls;
+  coEl.textContent = co.html;
+
+  // წინა დახურვა + შედარება
+  document.getElementById("pc-" + sym).textContent = " $" + fmt(q.pc);
+  const cp = comparison(price, q.pc);
+  const cpEl = document.getElementById("cmp-pc-" + sym);
+  cpEl.className = "cmp " + cp.cls;
+  cpEl.textContent = cp.html;
+}
+
+async function refresh() {
+  let ok = false;
+  for (const s of SYMBOLS) {
+    try { await loadQuote(s); ok = true; } catch (e) {}
+  }
+  const dot = document.getElementById("statusDot");
+  const txt = document.getElementById("statusText");
+  if (ok) {
+    dot.className = "dot live";
+    txt.textContent = "ცოცხალი · " + new Date().toLocaleTimeString("ka-GE");
+  } else {
+    dot.className = "dot";
+    txt.textContent = "ფასი ვერ ჩაიტვირთა";
+  }
+}
+
+refresh();
+setInterval(refresh, 15000);
+</script>
+
+</body>
+</html>
