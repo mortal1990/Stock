@@ -17,18 +17,33 @@
     font-family: "SF Mono", "JetBrains Mono", "Consolas", monospace;
     padding: 10px; display: flex; flex-direction: column; gap: 10px;
   }
+  .searchwrap { position: relative; }
   .searchbar { display: flex; gap: 6px; }
   .searchbar input {
     flex: 1; padding: 9px 11px; background: var(--card); border: 1px solid var(--border);
-    color: var(--text); font-family: inherit; font-size: 13px; border-radius: 8px; text-transform: uppercase;
+    color: var(--text); font-family: inherit; font-size: 13px; border-radius: 8px;
   }
-  .searchbar input::placeholder { text-transform: none; color: var(--muted); }
+  .searchbar input::placeholder { color: var(--muted); }
   .searchbar button {
     padding: 9px 14px; background: var(--accent); color: #0d1117; border: none; border-radius: 8px;
     font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
   }
   .searchbar button:hover { opacity: .9; }
   .searcherr { color: var(--down); font-size: 11px; min-height: 13px; padding-left: 2px; }
+
+  /* ჩამოსაშლელი ვარიანტები */
+  .dropdown {
+    position: absolute; top: 44px; left: 0; right: 0; z-index: 20;
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    max-height: 260px; overflow-y: auto; display: none;
+  }
+  .dropdown.show { display: block; }
+  .opt { padding: 9px 11px; cursor: pointer; border-bottom: 1px solid var(--border); }
+  .opt:last-child { border-bottom: none; }
+  .opt:hover { background: var(--bg); }
+  .opt .t { font-size: 13px; font-weight: 700; }
+  .opt .d { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .opt .loading, .opt .empty { color: var(--muted); font-size: 12px; }
 
   .widget {
     background: var(--card); border: 1px solid var(--border); border-radius: 12px;
@@ -88,9 +103,12 @@
 </div>
 
 <div id="main" class="hidden">
-  <div class="searchbar">
-    <input type="text" id="searchInput" placeholder="ჩაწერე ტიკერი (მაგ. AAPL)" autocomplete="off">
-    <button onclick="addSymbol()">დამატება</button>
+  <div class="searchwrap">
+    <div class="searchbar">
+      <input type="text" id="searchInput" placeholder="ჩაწერე კომპანია ან ტიკერი (მაგ. Tesla, TSL)" autocomplete="off">
+      <button onclick="addTyped()">დამატება</button>
+    </div>
+    <div class="dropdown" id="dropdown"></div>
   </div>
   <div class="searcherr" id="searchErr"></div>
   <div id="widgets"></div>
@@ -107,6 +125,7 @@ const NAMES = { ORCL: "Oracle", FLUT: "Flutter Ent." };
 let API_KEY = "";
 let symbols = [];
 let timer = null;
+let searchTimer = null;
 
 function fmt(n, d = 2) {
   if (n === null || n === undefined || isNaN(n)) return "—";
@@ -148,6 +167,78 @@ function resetKey() {
   document.getElementById("keyErr").textContent = "";
 }
 
+// --- ძებნა / ავტოკომპლიტი ---
+function onSearchInput() {
+  const q = document.getElementById("searchInput").value.trim();
+  const dd = document.getElementById("dropdown");
+  if (searchTimer) clearTimeout(searchTimer);
+  if (q.length < 1) { dd.classList.remove("show"); dd.innerHTML = ""; return; }
+  dd.classList.add("show");
+  dd.innerHTML = '<div class="opt"><span class="loading">ვეძებ...</span></div>';
+  // debounce — 350მწ დაყოვნება
+  searchTimer = setTimeout(() => doSearch(q), 350);
+}
+
+async function doSearch(q) {
+  const dd = document.getElementById("dropdown");
+  try {
+    const r = await fetch("https://finnhub.io/api/v1/search?q=" + encodeURIComponent(q) + "&token=" + API_KEY);
+    const data = await r.json();
+    const results = (data.result || [])
+      // მხოლოდ ჩვეულებრივი აქციები, უცნაური სიმბოლოების გარეშე (. : გამოვრიცხოთ)
+      .filter(x => x.symbol && !x.symbol.includes(".") && !x.symbol.includes(":"))
+      .slice(0, 8);
+    if (results.length === 0) {
+      dd.innerHTML = '<div class="opt"><span class="empty">ვერ მოიძებნა</span></div>';
+      return;
+    }
+    dd.innerHTML = results.map(x =>
+      '<div class="opt" onclick="pickSymbol(\'' + x.symbol + '\')">' +
+      '<div class="t">' + x.symbol + '</div>' +
+      '<div class="d">' + (x.description || "") + '</div></div>'
+    ).join("");
+  } catch (e) {
+    dd.innerHTML = '<div class="opt"><span class="empty">ქსელის შეცდომა</span></div>';
+  }
+}
+
+function pickSymbol(sym) {
+  document.getElementById("dropdown").classList.remove("show");
+  document.getElementById("searchInput").value = "";
+  addSymbol(sym);
+}
+
+// ღილაკით დამატება — ჩაწერილ ტექსტს პირდაპირ ცდის როგორც ტიკერს
+function addTyped() {
+  const sym = document.getElementById("searchInput").value.trim().toUpperCase();
+  if (sym) addSymbol(sym);
+}
+
+async function addSymbol(sym) {
+  const errEl = document.getElementById("searchErr");
+  errEl.textContent = "";
+  if (symbols.includes(sym)) { errEl.textContent = sym + " უკვე დამატებულია"; return; }
+  errEl.textContent = "ვამოწმებ " + sym + "...";
+  try {
+    const r = await fetch("https://finnhub.io/api/v1/quote?symbol=" + sym + "&token=" + API_KEY);
+    const q = await r.json();
+    if (q.c === undefined || q.c === 0) { errEl.textContent = sym + " ვერ მოიძებნა"; return; }
+    symbols.push(sym);
+    storeSymbols();
+    renderWidgets();
+    document.getElementById("searchInput").value = "";
+    errEl.textContent = "";
+    await loadQuote(sym);
+  } catch (e) { errEl.textContent = "ქსელის შეცდომა"; }
+}
+
+function removeSymbol(sym) {
+  symbols = symbols.filter(s => s !== sym);
+  storeSymbols();
+  renderWidgets();
+  refresh();
+}
+
 function widgetHTML(sym) {
   const name = NAMES[sym] || "";
   return '<div class="widget" id="w-' + sym + '">' +
@@ -159,37 +250,8 @@ function widgetHTML(sym) {
     '<div class="line"><span class="left">გუშინ დახურვა<span class="num" id="pc-' + sym + '">—</span></span><span class="cmp" id="cmp-pc-' + sym + '">—</span></div>' +
     '</div></div>';
 }
-
 function renderWidgets() {
   document.getElementById("widgets").innerHTML = symbols.map(widgetHTML).join("");
-}
-
-async function addSymbol() {
-  const inp = document.getElementById("searchInput");
-  const errEl = document.getElementById("searchErr");
-  const sym = inp.value.trim().toUpperCase();
-  errEl.textContent = "";
-  if (!sym) return;
-  if (symbols.includes(sym)) { errEl.textContent = sym + " უკვე დამატებულია"; return; }
-  errEl.textContent = "ვამოწმებ " + sym + "...";
-  try {
-    const r = await fetch("https://finnhub.io/api/v1/quote?symbol=" + sym + "&token=" + API_KEY);
-    const q = await r.json();
-    if (q.c === undefined || q.c === 0) { errEl.textContent = sym + " ვერ მოიძებნა"; return; }
-    symbols.push(sym);
-    storeSymbols();
-    renderWidgets();
-    inp.value = "";
-    errEl.textContent = "";
-    await loadQuote(sym);
-  } catch (e) { errEl.textContent = "ქსელის შეცდომა"; }
-}
-
-function removeSymbol(sym) {
-  symbols = symbols.filter(s => s !== sym);
-  storeSymbols();
-  renderWidgets();
-  refresh();
 }
 
 async function loadQuote(sym) {
@@ -227,7 +289,13 @@ function startApp() {
   renderWidgets();
   refresh();
   timer = setInterval(refresh, 15000);
-  document.getElementById("searchInput").addEventListener("keydown", e => { if (e.key === "Enter") addSymbol(); });
+  const si = document.getElementById("searchInput");
+  si.addEventListener("input", onSearchInput);
+  si.addEventListener("keydown", e => { if (e.key === "Enter") { addTyped(); document.getElementById("dropdown").classList.remove("show"); } });
+  // გარეთ დაწკაპუნებაზე dropdown დაიხუროს
+  document.addEventListener("click", e => {
+    if (!e.target.closest(".searchwrap")) document.getElementById("dropdown").classList.remove("show");
+  });
 }
 
 window.addEventListener("DOMContentLoaded", () => {
